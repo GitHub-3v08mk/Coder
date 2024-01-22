@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-coder
+  namespace: user-workloads
+  labels:
+    app: coder
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: coder
+  template:
+    metadata:
+      labels:
+        app: coder
+    spec:
+      containers:
+        - name: container-coder
+          image: <azure_container_registry_wildcard>.azurecr.io/coder:<container_image_tag_wildcard>
+          env:
+            - name: HOSTINGSTRATEGY
+              value: "Containerized"
+            - name: HOSTINGSERVICE
+              value: "Azure Kubernetes Service"
+          livenessProbe:
+            httpGet:
+              path: /status/liveness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 60
+          readinessProbe:
+            httpGet:
+              path: /status/readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /status/startup
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          volumeMounts:
+            - name: azure-fileshare-volume
+              mountPath: /data
+              readOnly: false
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+      volumes:
+        - name: azure-fileshare-volume
+          persistentVolumeClaim:
+            claimName: azure-fileshare-volume
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-coder
+  namespace: user-workloads
+  labels:
+    app: coder
+spec:
+  type: LoadBalancer
+  selector:
+    app: coder
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080

@@ -1,0 +1,42 @@
+name: Deploy to Azure
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Deploy to Azure
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+    
+    - name: Login to Azure
+      run: az login --service-principal --username ${{ secrets.AZURE_SERVICE_PRINCIPAL }} --password ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT }}
+
+    - name: Get Latest Container Image Tag
+      id: get_tag
+      run: |
+        TAG=$(az acr repository show-tags --name ${{ secrets.AZURE_CONTAINER_REGISTRY }} --repository coder --orderby time_desc --output tsv --detail | head -n 1 | awk '{print $4}')
+        NUMERIC_TAG=$(echo "$TAG" | grep -oE '[0-9]+')
+        echo "::set-output name=image_tag::$NUMERIC_TAG"
+
+    - name: Kubernetes YAML File Update
+      run: |
+        sed -i 's/<container_image_tag_wildcard>/${{ steps.get_tag.outputs.image_tag }}/' Manifests/kubernetes.yml &&
+        sed -i 's/<azure_container_registry_wildcard>/${{ secrets.AZURE_CONTAINER_REGISTRY }}/' Manifests/kubernetes.yml &&
+        cat Manifests/kubernetes.yml
+
+    - name: Kubernetes Set Context
+      uses: Azure/k8s-set-context@v3.0
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBERNETES_KUBECONFIG }}
+    
+    - name: Kubernetes Deployment
+      uses: Azure/k8s-deploy@v4.9
+      with:
+        action: deploy
+        manifests: Manifests/kubernetes.yml
+        namespace: user-workloads
