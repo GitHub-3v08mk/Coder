@@ -29,17 +29,10 @@ jobs:
     - name: Login to Azure
       run: az login --service-principal --username ${{ secrets.AZURE_SERVICE_PRINCIPAL }} --password ${{ secrets.AZURE_SERVICE_PRINCIPAL_PASSWORD }} --tenant ${{ secrets.AZURE_TENANT }}
 
-    - name: Get Latest Container Image Tag
-      id: get_tag
-      run: |
-        TAG=$(az acr repository show-tags --name ${{ secrets.AZURE_CONTAINER_REGISTRY }} --repository coder --orderby time_desc --output tsv --detail | head -n 1 | awk '{print $4}')
-        NUMERIC_TAG=$(echo "$TAG" | grep -oE '[0-9]+')
-        INCREMENTED_TAG=$((NUMERIC_TAG + 1))
-        UPDATED_TAG=$(echo "$TAG" | sed "s/$NUMERIC_TAG/$INCREMENTED_TAG/")
-        echo "::set-output name=image_tag::$UPDATED_TAG"
+
 
     - name: Build and Push Image
       run: |
         docker login ${{ secrets.AZURE_CONTAINER_REGISTRY }}.azurecr.io -u ${{ secrets.AZURE_CONTAINER_REGISTRY_USERNAME }} -p ${{ secrets.AZURE_CONTAINER_REGISTRY_PASSWORD }} &&
-        docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY }}.azurecr.io/coder:${{ steps.get_tag.outputs.image_tag }} -f Coder/Dockerfile . &&
-        docker push ${{ secrets.AZURE_CONTAINER_REGISTRY }}.azurecr.io/coder:${{ steps.get_tag.outputs.image_tag }}
+        docker build -t ${{ secrets.AZURE_CONTAINER_REGISTRY }}.azurecr.io/coder:1 -f Coder/Dockerfile . &&
+        docker push ${{ secrets.AZURE_CONTAINER_REGISTRY }}.azurecr.io/coder:1
