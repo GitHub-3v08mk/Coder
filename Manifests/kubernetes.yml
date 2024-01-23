@@ -52,8 +52,7 @@ spec:
       volumes:
         - name: azure-fileshare-volume
           persistentVolumeClaim:
-            claimName: azure-fileshare-volume-pvc
-
+            claimName: pvc-azure-fileshare
 ---
 
 apiVersion: v1
