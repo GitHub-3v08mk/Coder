@@ -63,6 +63,7 @@ metadata:
   annotations:
     service.beta.kubernetes.io/azure-load-balancer-resource-group: rg-spoke-kubernetes
     service.beta.kubernetes.io/azure-pip-name: kubernetes-publicip-coder
+    service.beta.kubernetes.io/azure-dns-label-name: kubernetes-service-coder-3v08mk
   labels:
     app: coder
 spec:
