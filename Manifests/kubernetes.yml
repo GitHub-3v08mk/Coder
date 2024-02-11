@@ -87,7 +87,7 @@ metadata:
     appgw.ingress.kubernetes.io/appgw-ssl-certificate: certificate-agic
     appgw.ingress.kubernetes.io/redirect-to-https: "true"
 spec:
-  ingressClassName: azure/application-gateway
+  ingressClassName: azure-application-gateway
   rules:
   - host: arneskubernetesdemo.northeurope.cloudapp.azure.com
     http:
